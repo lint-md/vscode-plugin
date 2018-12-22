@@ -14,8 +14,11 @@ import {
 	DidChangeConfigurationNotification,
 	CompletionItem,
 	CompletionItemKind,
-	TextDocumentPositionParams
+	TextDocumentPositionParams,
+	Position
 } from 'vscode-languageserver';
+import { lint, version } from 'lint-md';
+
 
 // Create a connection for the server. The connection uses Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
@@ -127,42 +130,43 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 
 	// The validator creates diagnostics for all uppercase words length 2 and more
 	let text = textDocument.getText();
-	let pattern = /\b[A-Z]{2,}\b/g;
-	let m: RegExpExecArray | null;
-
+	const errors = lint(text, {});
 	let problems = 0;
 	let diagnostics: Diagnostic[] = [];
-	while ((m = pattern.exec(text)) && problems < settings.maxNumberOfProblems) {
+	errors.forEach((error: any) => {
+		const {start, end, text} = error
 		problems++;
 		let diagnosic: Diagnostic = {
-			severity: DiagnosticSeverity.Warning,
+			severity: DiagnosticSeverity.Error,
 			range: {
-				start: textDocument.positionAt(m.index),
-				end: textDocument.positionAt(m.index + m[0].length)
+				start: Position.create(start.line - 1,start.column -1 ),
+				end: Position.create(end.line - 1,end.column -1 )
+				// start: textDocument.positionAt(m.index),
+				// end: textDocument.positionAt(m.index + m[0].length)
 			},
-			message: `${m[0]} is all uppercase.`,
-			source: 'ex'
+			message: text + '...',
+			source: 'mdlint'
 		};
-		if (hasDiagnosticRelatedInformationCapability) {
-			diagnosic.relatedInformation = [
-				{
-					location: {
-						uri: textDocument.uri,
-						range: Object.assign({}, diagnosic.range)
-					},
-					message: 'Spelling matters'
-				},
-				{
-					location: {
-						uri: textDocument.uri,
-						range: Object.assign({}, diagnosic.range)
-					},
-					message: 'Particularly for names'
-				}
-			];
-		}
+		// if (hasDiagnosticRelatedInformationCapability) {
+		// 	diagnosic.relatedInformation = [
+		// 		{
+		// 			location: {
+		// 				uri: textDocument.uri,
+		// 				range: Object.assign({}, diagnosic.range)
+		// 			},
+		// 			message: 'Spelling matters'
+		// 		},
+		// 		{
+		// 			location: {
+		// 				uri: textDocument.uri,
+		// 				range: Object.assign({}, diagnosic.range)
+		// 			},
+		// 			message: 'Particularly for names'
+		// 		}
+		// 	];
+		// }
 		diagnostics.push(diagnosic);
-	}
+	})
 
 	// Send the computed diagnostics to VSCode.
 	connection.sendDiagnostics({ uri: textDocument.uri, diagnostics });
