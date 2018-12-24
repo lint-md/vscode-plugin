@@ -14,7 +14,6 @@ vscode-mdlint-plugin is an awesome vscode markdown plugin, powerred by [hustcc/l
 {
   "rules": {
     "no-empty-code": 1
-    // RULE: LEVEL
   }
 }
 ```
