@@ -12,14 +12,11 @@ import {
   ProposedFeatures,
   InitializeParams,
   DidChangeConfigurationNotification,
-  CompletionItem,
-  CompletionItemKind,
-  TextDocumentPositionParams,
   Position
 } from 'vscode-languageserver'
 import * as path from 'path'
 import * as fs from 'fs'
-import { lint, version } from 'lint-md'
+import { lint } from 'lint-md'
 let rulesConfig = {}
 if (fs.existsSync(path.resolve('./mdlint.json'))) {
   rulesConfig = require(path.resolve('./mdlint.json')).rules
